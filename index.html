@@ -21,6 +21,23 @@
             .phone-view-note { display: block; }
         }
     </style>
+    <!-- 🔥 FIREBASE SDK & CONFIG - ADDED RIGHT BEFORE </head> -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script>
+      // 🔥 YOUR FIREBASE CONFIG (From your project 'kuber-31dab')
+      const firebaseConfig = {
+        apiKey: "AIzaSyA1wJDuFIYqfzwtxE0V-MTsPf2h_e7o4wc",
+        authDomain: "kuber-31dab.firebaseapp.com",
+        projectId: "kuber-31dab",
+        storageBucket: "kuber-31dab.firebasestorage.app",
+        messagingSenderId: "509382463779",
+        appId: "1:509382463779:web:5683047276feb19a897c96"
+      };
+      // Initialize Firebase
+      const app = firebase.initializeApp(firebaseConfig);
+      const auth = firebase.auth(); // This object handles login
+    </script>
 </head>
 <body>
     <div class="container">
