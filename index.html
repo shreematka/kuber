@@ -3,69 +3,164 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Professional Website</title>
+    <title>My Professional Website | Login</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
-        body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; min-height: 100vh; }
-        .container { max-width: 800px; margin: 0 auto; padding: 40px 20px; text-align: center; }
-        header { margin-bottom: 50px; }
-        h1 { font-size: 3rem; margin-bottom: 10px; font-weight: 300; }
-        .tagline { font-size: 1.2rem; opacity: 0.9; }
-        .main-content { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); padding: 40px; border-radius: 20px; margin: 30px 0; }
-        .btn { display: inline-block; background: white; color: #764ba2; padding: 15px 30px; margin: 10px; border-radius: 50px; text-decoration: none; font-weight: bold; transition: transform 0.3s; }
-        .btn:hover { transform: translateY(-3px); }
-        footer { margin-top: 50px; font-size: 0.9rem; opacity: 0.7; }
-        .phone-view-note { background: rgba(0,0,0,0.2); padding: 15px; border-radius: 10px; margin-top: 30px; display: none; }
-        @media (max-width: 768px) { 
-            h1 { font-size: 2.2rem; } 
-            .phone-view-note { display: block; }
-        }
+        body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .container { max-width: 500px; width: 100%; text-align: center; }
+        .login-box { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); padding: 40px; border-radius: 20px; }
+        h1 { font-size: 2.5rem; margin-bottom: 10px; font-weight: 300; }
+        .tagline { font-size: 1rem; opacity: 0.9; margin-bottom: 30px; }
+        .form-group { margin-bottom: 20px; text-align: left; }
+        label { display: block; margin-bottom: 8px; font-weight: 600; }
+        input { width: 100%; padding: 15px; border: none; border-radius: 10px; background: rgba(255, 255, 255, 0.9); font-size: 1rem; }
+        button { background: white; color: #764ba2; border: none; padding: 16px 40px; border-radius: 50px; font-size: 1.1rem; font-weight: bold; cursor: pointer; transition: transform 0.3s; width: 100%; margin-top: 10px; }
+        button:hover { transform: translateY(-3px); }
+        button:disabled { background: #cccccc; cursor: not-allowed; }
+        #message { margin-top: 20px; padding: 12px; border-radius: 10px; font-weight: 600; display: none; }
+        .success { background: rgba(46, 204, 113, 0.2); border: 1px solid #2ecc71; }
+        .error { background: rgba(231, 76, 60, 0.2); border: 1px solid #e74c3c; }
+        .info { background: rgba(52, 152, 219, 0.2); border: 1px solid #3498db; }
+        .footer { margin-top: 30px; font-size: 0.8rem; opacity: 0.7; }
+        #recaptcha-container { margin: 20px auto; display: flex; justify-content: center; }
     </style>
-    <!-- 🔥 FIREBASE SDK & CONFIG - ADDED RIGHT BEFORE </head> -->
+    <!-- FIREBASE SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script>
-      // 🔥 YOUR FIREBASE CONFIG (From your project 'kuber-31dab')
-      const firebaseConfig = {
-        apiKey: "AIzaSyA1wJDuFIYqfzwtxE0V-MTsPf2h_e7o4wc",
-        authDomain: "kuber-31dab.firebaseapp.com",
-        projectId: "kuber-31dab",
-        storageBucket: "kuber-31dab.firebasestorage.app",
-        messagingSenderId: "509382463779",
-        appId: "1:509382463779:web:5683047276feb19a897c96"
-      };
-      // Initialize Firebase
-      const app = firebase.initializeApp(firebaseConfig);
-      const auth = firebase.auth(); // This object handles login
+        // 🔥 YOUR FIREBASE CONFIG (Make sure this is correct)
+        const firebaseConfig = {
+            apiKey: "AIzaSyA1wJDuFIYqfzwtxE0V-MTsPf2h_e7o4wc",
+            authDomain: "kuber-31dab.firebaseapp.com",
+            projectId: "kuber-31dab",
+            storageBucket: "kuber-31dab.firebasestorage.app",
+            messagingSenderId: "509382463779",
+            appId: "1:509382463779:web:5683047276feb19a897c96"
+        };
+        // Initialize Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        // Global variable to store the OTP confirmation result
+        let confirmationResult = null;
+
+        // Function to show messages to the user
+        function showMessage(text, type) {
+            const msgDiv = document.getElementById('message');
+            msgDiv.textContent = text;
+            msgDiv.className = type;
+            msgDiv.style.display = 'block';
+        }
+
+        // 1. SEND OTP: Called when user enters phone number
+        window.sendOTP = function() {
+            const phoneNumber = document.getElementById('phone').value;
+            const countryCode = "+91"; // Change this to your country code (e.g., +1 for US)
+            const fullNumber = countryCode + phoneNumber;
+
+            // Input validation
+            if (!phoneNumber || phoneNumber.length < 10) {
+                showMessage("Please enter a valid 10-digit phone number.", "error");
+                return;
+            }
+
+            showMessage("Sending OTP...", "info");
+            document.getElementById('sendOtpBtn').disabled = true;
+
+            // Firebase: Request to send OTP via SMS
+            auth.signInWithPhoneNumber(fullNumber, window.recaptchaVerifier)
+                .then((result) => {
+                    confirmationResult = result; // Save the confirmation result
+                    showMessage("OTP sent successfully! Please check your SMS.", "success");
+                    // Switch UI to OTP verification
+                    document.getElementById('phone-group').style.display = 'none';
+                    document.getElementById('otp-group').style.display = 'block';
+                    document.getElementById('sendOtpBtn').style.display = 'none';
+                    document.getElementById('verifyOtpBtn').style.display = 'block';
+                })
+                .catch((error) => {
+                    console.error("Send OTP Error:", error);
+                    showMessage("Failed to send OTP: " + error.message, "error");
+                    document.getElementById('sendOtpBtn').disabled = false;
+                });
+        };
+
+        // 2. VERIFY OTP: Called when user enters the received OTP
+        window.verifyOTP = function() {
+            const otpCode = document.getElementById('otp').value;
+
+            if (!otpCode || otpCode.length !== 6) {
+                showMessage("Please enter the 6-digit OTP.", "error");
+                return;
+            }
+
+            showMessage("Verifying OTP...", "info");
+            document.getElementById('verifyOtpBtn').disabled = true;
+
+            // Firebase: Confirm the OTP code
+            confirmationResult.confirm(otpCode)
+                .then((userCredential) => {
+                    // SUCCESS! User is now logged in.
+                    const user = userCredential.user;
+                    showMessage("✅ Login successful! Welcome " + (user.phoneNumber || "User"), "success");
+                    // In the next step, we will redirect to dashboard here.
+                    // For now, we just show success.
+                    document.getElementById('verifyOtpBtn').disabled = false;
+                })
+                .catch((error) => {
+                    console.error("Verify OTP Error:", error);
+                    showMessage("Invalid OTP. Please try again.", "error");
+                    document.getElementById('verifyOtpBtn').disabled = false;
+                });
+        };
+
+        // Initialize reCAPTCHA when the page loads
+        window.onload = function() {
+            window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
+                'size': 'normal',
+                'callback': (response) => {
+                    // reCAPTCHA solved, allow sendOTP to be called
+                    console.log("reCAPTCHA verified");
+                }
+            });
+            window.recaptchaVerifier.render();
+        };
     </script>
 </head>
 <body>
     <div class="container">
-        <header>
-            <h1>Welcome to My Site</h1>
-            <p class="tagline">A professional platform with secure login and subscriptions.</p>
-        </header>
-        
-        <section class="main-content">
-            <h2>Coming Soon</h2>
-            <p>We are building an exclusive platform where you can manage your profile and access premium content with flexible daily or weekly subscriptions.</p>
-            
-            <div style="margin: 40px 0;">
-                <a href="#" class="btn">Create Account</a>
-                <a href="#" class="btn">Login</a>
+        <div class="login-box">
+            <h1>Member Login</h1>
+            <p class="tagline">Enter your phone number to receive a one-time password (OTP)</p>
+
+            <!-- reCAPTCHA Container (Required by Firebase) -->
+            <div id="recaptcha-container"></div>
+
+            <!-- PHONE NUMBER INPUT (Initially shown) -->
+            <div id="phone-group" class="form-group">
+                <label for="phone">Mobile Number</label>
+                <input type="tel" id="phone" placeholder="Enter 10-digit number (e.g., 9876543210)" maxlength="10" inputmode="numeric">
             </div>
-            
-            <p><strong>Planned Features:</strong> Mobile OTP Login • User Dashboard • Secure UPI Payments • Subscription Management</p>
-            
-            <div class="phone-view-note">
-                <p><small>💡 You're viewing this on a phone. To build this site, we are using GitHub's editor. Later features will require connecting to Firebase.</small></p>
+
+            <!-- OTP INPUT (Initially hidden) -->
+            <div id="otp-group" class="form-group" style="display: none;">
+                <label for="otp">Enter OTP</label>
+                <input type="text" id="otp" placeholder="Enter 6-digit OTP" maxlength="6" inputmode="numeric">
             </div>
-        </section>
-        
-        <footer>
-            <p>Built with GitHub Pages • Step-by-Step Guide</p>
-            <p>Next Step: Connect to Firebase for authentication</p>
-        </footer>
+
+            <!-- SEND OTP BUTTON (Initially shown) -->
+            <button id="sendOtpBtn" onclick="sendOTP()">Send OTP</button>
+
+            <!-- VERIFY OTP BUTTON (Initially hidden) -->
+            <button id="verifyOtpBtn" onclick="verifyOTP()" style="display: none;">Verify OTP & Login</button>
+
+            <!-- MESSAGE DISPLAY -->
+            <div id="message"></div>
+
+            <div class="footer">
+                <p>By logging in, you agree to our Terms. A secure OTP will be sent to your number.</p>
+                <p>🔥 Powered by Firebase & GitHub Pages</p>
+            </div>
+        </div>
     </div>
 </body>
 </html>
