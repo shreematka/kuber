@@ -671,4 +671,34 @@
         document.getElementById('resultsPage').style.display = 'none';
         
         // Show market page
-     
+        document.getElementById('marketPage').style.display = 'block';
+        
+        // Show buttons, hide back button
+        document.querySelector('.refresh-btn').style.display = 'inline-block';
+        document.querySelector('.back-btn').style.display = 'none';
+    }
+        // ========== REFRESH DATA ==========
+        function refreshData() {
+            // Show loading animation
+            const refreshBtn = document.querySelector('.refresh-btn');
+            const originalText = refreshBtn.textContent;
+            refreshBtn.textContent = '🔄 UPDATING...';
+            refreshBtn.disabled = true;
+            
+            // Update clock
+            updateLiveClock();
+            
+            // Add premium animation effect
+            document.querySelectorAll('.market-card').forEach(card => {
+                card.style.transform = 'scale(0.98)';
+                setTimeout(() => {
+                    card.style.transform = '';
+                }, 300);
+            });
+            
+            // Reset button after 1 second
+            setTimeout(() => {
+                refreshBtn.textContent = originalText;
+                refreshBtn.disabled = false;
+                
+                // Show success message
